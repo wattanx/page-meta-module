@@ -1,0 +1,17 @@
+import "core-js/modules/es.array.iterator.js";
+import "core-js/modules/es.promise.js";
+import "core-js/modules/es.object.assign.js";
+import "core-js/modules/es.promise.finally.js";
+import { defineComponent as _defineComponent } from 'vue';
+import { ref } from "vue";
+export default /*#__PURE__*/_defineComponent({
+  __name: 'index',
+  setup: function setup(__props) {
+    false && {};
+    var count = ref(0);
+    return {
+      __sfc: true,
+      count: count
+    };
+  }
+});
