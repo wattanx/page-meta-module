@@ -1,9 +1,4 @@
-import {
-  defineNuxtModule,
-  addWebpackPlugin,
-  addVitePlugin,
-  addTemplate,
-} from "@nuxt/kit";
+import { defineNuxtModule, addWebpackPlugin, addVitePlugin } from "@nuxt/kit";
 import { PageMetaPlugin } from "./page-meta";
 import type { PageMetaPluginOptions } from "./page-meta";
 import { resolve } from "pathe";
