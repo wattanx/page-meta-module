@@ -2,6 +2,8 @@
 
 This module provides the `definePageMeta` macro in Nuxt 2 as well.
 
+- ▶️  [Playground](https://stackblitz.com/edit/github-3fgb91-1hjfln)
+
 > **Warning**
 > This library is in active development. Use at your own risk.
 
