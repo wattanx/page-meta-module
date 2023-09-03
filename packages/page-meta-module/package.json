@@ -6,13 +6,11 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./dist/module.d.ts",
       "import": "./dist/module.mjs",
       "require": "./module.cjs"
     }
   },
   "main": "./module.cjs",
-  "types": "./dist/module.d.ts",
   "files": [
     "dist",
     "module.cjs"

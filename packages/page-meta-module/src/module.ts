@@ -4,23 +4,19 @@ import {
   addVitePlugin,
   addTemplate,
 } from "@nuxt/kit";
-import { resolve } from "pathe";
 import { PageMetaPlugin } from "./page-meta";
 import type { PageMetaPluginOptions } from "./page-meta";
-import { normalizeRoutes, resolvePagesRoutes } from "./utils";
+import { resolve } from "pathe";
 
-export interface ModuleOptions {}
-
-export default defineNuxtModule<ModuleOptions>({
+export default defineNuxtModule({
   meta: {
     name: "@wattanx/page-meta",
+    configKey: "pageMeta",
     compatibility: {
       bridge: true,
     },
   },
-  // Default configuration options of the Nuxt module
-  defaults: {},
-  setup(options, nuxt) {
+  setup(_, nuxt) {
     const pageMetaOptions: PageMetaPluginOptions = {
       dev: nuxt.options.dev,
       // TODO
@@ -32,26 +28,6 @@ export default defineNuxtModule<ModuleOptions>({
     nuxt.hook("modules:done", () => {
       addVitePlugin(PageMetaPlugin.vite(pageMetaOptions));
       addWebpackPlugin(PageMetaPlugin.webpack(pageMetaOptions));
-    });
-
-    // Add routes template
-    addTemplate({
-      filename: "routes.mjs",
-      async getContents() {
-        const pages = await resolvePagesRoutes();
-        await nuxt.callHook("pages:extend", pages);
-        const { routes, imports } = normalizeRoutes(pages);
-        return [...imports, `export default ${routes}`].join("\n");
-      },
-    });
-
-    nuxt.hook("build:done", () => {
-      // override router.js
-      addTemplate({
-        filename: "router.js",
-        getContents: () => ``,
-        write: true,
-      });
     });
 
     addTemplate({
