@@ -1,15 +1,16 @@
-import { describe, it, expect } from 'vitest'
-import { fileURLToPath } from 'node:url'
-import { setup, $fetch } from '@nuxt/test-utils'
+import { describe, it, expect } from "vitest";
+import { mount } from "@vue/test-utils";
+import Index from "../playground/pages/index.vue";
+import PageMeta from "../playground/pages/page-meta.vue";
 
-describe('ssr', async () => {
-  await setup({
-    rootDir: fileURLToPath(new URL('./fixtures/basic', import.meta.url)),
-  })
+describe("middleware", async () => {
+  it("render", () => {
+    const wrapper = mount(Index);
+    expect(wrapper.html()).toContain("Nuxt module playground!");
+  });
 
-  it('renders the index page', async () => {
-    // Get response to a server-rendered page with `$fetch`.
-    const html = await $fetch('/')
-    expect(html).toContain('<div>basic</div>')
-  })
-})
+  it("definePageMeta", () => {
+    const wrapper = mount(PageMeta);
+    expect(wrapper.html()).toContain("PageMeta");
+  });
+});

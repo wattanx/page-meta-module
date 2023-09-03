@@ -3,12 +3,17 @@ import { createUnplugin } from "unplugin";
 import { parseQuery, parseURL } from "ufo";
 import type { StaticImport } from "mlly";
 import { findExports, findStaticImports, parseStaticImport } from "mlly";
-import type { CallExpression, Expression, Identifier } from "estree";
+import type {
+  CallExpression,
+  Expression,
+  Identifier,
+  ObjectExpression,
+  Property,
+} from "estree";
 import type { Node } from "estree-walker";
 import { walk } from "estree-walker";
 import MagicString from "magic-string";
 import { isAbsolute, normalize } from "pathe";
-import fs from "fs";
 
 export interface PageMetaPluginOptions {
   dirs: Array<string | RegExp>;
@@ -16,8 +21,11 @@ export interface PageMetaPluginOptions {
   sourcemap?: boolean;
 }
 
+const NODE_MODULES_RE = /[\\/]node_modules[\\/]/;
+const HAS_MACRO_RE = /\bdefinePageMeta\s*\(\s*/;
+
 const CODE_EMPTY = `
-const __nuxt_page_meta = null
+const  __default__ = null
 export default __nuxt_page_meta
 `;
 
@@ -41,22 +49,30 @@ export const PageMetaPlugin = createUnplugin(
       name: "nuxt:pages-macros-transform",
       enforce: "post",
       transformInclude(id) {
-        const query = parseMacroQuery(id);
-        id = normalize(id);
-
-        const isPagesDir = options.dirs.some((dir) =>
-          typeof dir === "string" ? id.startsWith(dir) : dir.test(id)
-        );
-        if (!isPagesDir && !query.macro) {
-          return false;
-        }
-
-        const { pathname } = parseURL(
+        const { pathname, search } = parseURL(
           decodeURIComponent(pathToFileURL(id).href)
         );
-        return /\.(m?[jt]sx?|vue)/.test(pathname);
+        const { type, macro, setup } = parseQuery(search);
+
+        // vue files
+        if (
+          pathname.endsWith(".vue") &&
+          (type === "template" ||
+            type === "script" ||
+            setup === "true" ||
+            macro ||
+            !search)
+        ) {
+          return true;
+        }
       },
       transform(code, id) {
+        id = normalize(id);
+        const isNodeModule = NODE_MODULES_RE.test(id);
+
+        if (isNodeModule) {
+          return;
+        }
         const query = parseMacroQuery(id);
         if (query.type && query.type !== "script") {
           return;
@@ -74,100 +90,16 @@ export const PageMetaPlugin = createUnplugin(
           }
         }
 
-        const hasMacro = code.match(/\bdefinePageMeta\s*\(\s*/);
-
-        console.log("id", id);
-
-        // Remove any references to the macro from our pages
-        if (!query.macro) {
-          if (hasMacro) {
-            walk(
-              this.parse(code, {
-                sourceType: "module",
-                ecmaVersion: "latest",
-              }) as Node,
-              {
-                enter(_node) {
-                  if (
-                    _node.type !== "CallExpression" ||
-                    (_node as CallExpression).callee.type !== "Identifier"
-                  ) {
-                    return;
-                  }
-                  const node = _node as CallExpression & {
-                    start: number;
-                    end: number;
-                  };
-                  const name = "name" in node.callee && node.callee.name;
-                  if (name === "definePageMeta") {
-                    s.overwrite(node.start, node.end, "false && {}");
-                  }
-                },
-              }
-            );
-          }
-          fs.writeFileSync("test.txt", s.toString());
-          return result();
-        }
+        const hasMacro = HAS_MACRO_RE.test(code);
 
         const imports = findStaticImports(code);
 
-        // [vite] Re-export any script imports
-        const scriptImport = imports.find(
-          (i) => parseMacroQuery(i.specifier).type === "script"
-        );
-        if (scriptImport) {
-          const specifier = rewriteQuery(scriptImport.specifier);
-          s.overwrite(
-            0,
-            code.length,
-            `export { default } from ${JSON.stringify(specifier)}`
-          );
-          return result();
-        }
-
-        // [webpack] Re-export any exports from script blocks in the components
-        const currentExports = findExports(code);
-        for (const match of currentExports) {
-          if (match.type !== "default" || !match.specifier) {
-            continue;
-          }
-
-          const specifier = rewriteQuery(match.specifier);
-          s.overwrite(
-            0,
-            code.length,
-            `export { default } from ${JSON.stringify(specifier)}`
-          );
-          return result();
-        }
-
-        if (
-          !hasMacro &&
-          !code.includes("export { default }") &&
-          !code.includes("__nuxt_page_meta")
-        ) {
-          if (!code) {
-            s.append(CODE_EMPTY + (options.dev ? CODE_HMR : ""));
-            const { pathname } = parseURL(
-              decodeURIComponent(pathToFileURL(id).href)
-            );
-            console.error(
-              `The file \`${pathname}\` is not a valid page as it has no content.`
-            );
-          } else {
-            s.overwrite(
-              0,
-              code.length,
-              CODE_EMPTY + (options.dev ? CODE_HMR : "")
-            );
-          }
-
-          return result();
+        if (!hasMacro) {
+          return;
         }
 
         const importMap = new Map<string, StaticImport>();
-        const addedImports = new Set();
+
         for (const i of imports) {
           const parsed = parseStaticImport(i);
           for (const name of [
@@ -186,73 +118,92 @@ export const PageMetaPlugin = createUnplugin(
           }) as Node,
           {
             enter(_node) {
+              if (_node.type !== "ExportDefaultDeclaration") {
+                return;
+              }
+              const callexprettison = _node.declaration;
               if (
-                _node.type !== "CallExpression" ||
-                (_node as CallExpression).callee.type !== "Identifier"
+                callexprettison.type !== "CallExpression" ||
+                (callexprettison as CallExpression).callee.type !== "Identifier"
               ) {
                 return;
               }
-              const node = _node as CallExpression & {
+              const node = callexprettison as CallExpression & {
                 start: number;
                 end: number;
               };
               const name = "name" in node.callee && node.callee.name;
-              if (name !== "definePageMeta") {
+
+              if (!name.includes("defineComponent")) {
                 return;
               }
 
-              const meta = node.arguments[0] as Expression & {
+              const arg = node.arguments[0] as ObjectExpression & {
                 start: number;
                 end: number;
               };
 
-              let contents =
-                `const __nuxt_page_meta = ${
-                  code!.slice(meta.start, meta.end) || "null"
-                }\nexport default __nuxt_page_meta` +
-                (options.dev ? CODE_HMR : "");
+              const properties = arg.properties as (Property & {
+                start: number;
+                end: number;
+              })[];
 
-              function addImport(name: string | false) {
-                if (name && importMap.has(name)) {
-                  const importValue = importMap.get(name)!.code;
-                  if (!addedImports.has(importValue)) {
-                    contents = importMap.get(name)!.code + "\n" + contents;
-                    addedImports.add(importValue);
-                  }
-                }
-              }
+              const setupNode = properties.find(
+                (node) =>
+                  node.key.type === "Identifier" && node.key.name === "setup"
+              );
 
-              walk(meta, {
+              let options;
+              let contents;
+              walk(setupNode, {
                 enter(_node) {
-                  if (_node.type === "CallExpression") {
-                    const node = _node as CallExpression & {
-                      start: number;
-                      end: number;
-                    };
-                    addImport("name" in node.callee && node.callee.name);
+                  if (
+                    _node.type !== "CallExpression" ||
+                    (_node as CallExpression).callee.type !== "Identifier"
+                  ) {
+                    return;
                   }
-                  if (_node.type === "Identifier") {
-                    const node = _node as Identifier & {
-                      start: number;
-                      end: number;
-                    };
-                    addImport(node.name);
+                  const node = _node as CallExpression & {
+                    start: number;
+                    end: number;
+                  };
+                  const name = "name" in node.callee && node.callee.name;
+
+                  if (name !== "definePageMeta") {
+                    return;
                   }
+
+                  const meta = node.arguments[0] as ObjectExpression & {
+                    start: number;
+                    end: number;
+                  };
+
+                  s.overwrite(node.start, node.end, "");
+
+                  options = [
+                    ...meta.properties.map((p) => code.slice(p.start, p.end)),
+                  ].join(",");
                 },
               });
 
-              s.overwrite(0, code.length, contents);
+              if (code.includes("__nuxt_page_meta")) {
+                return;
+              }
+
+              s.prependLeft(properties[0].start, `${options},`);
             },
           }
         );
 
-        if (!s.hasChanged() && !code.includes("__nuxt_page_meta")) {
-          s.overwrite(
-            0,
-            code.length,
-            CODE_EMPTY + (options.dev ? CODE_HMR : "")
-          );
-        }
+        console.log(s.toString());
+
+        // if (!s.hasChanged() && !code.includes("__default__")) {
+        //   s.overwrite(
+        //     0,
+        //     code.length,
+        //     CODE_EMPTY + (options.dev ? CODE_HMR : "")
+        //   );
+        // }
 
         return result();
       },
@@ -276,7 +227,6 @@ export const PageMetaPlugin = createUnplugin(
 
 // https://github.com/vuejs/vue-loader/pull/1911
 // https://github.com/vitejs/vite/issues/8473
-
 function rewriteQuery(id: string) {
   return id.replace(
     /\?.+$/,

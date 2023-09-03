@@ -45,6 +45,15 @@ export default defineNuxtModule<ModuleOptions>({
       },
     });
 
+    nuxt.hook("build:done", () => {
+      // override router.js
+      addTemplate({
+        filename: "router.js",
+        getContents: () => ``,
+        write: true,
+      });
+    });
+
     addTemplate({
       filename: "types/define-page-meta.d.ts",
       getContents: () =>
