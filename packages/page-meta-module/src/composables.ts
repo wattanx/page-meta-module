@@ -1,5 +1,7 @@
 export interface PageMeta {
+  name?: string;
   middleware?: string | string[];
+  layout?: string;
 }
 
 const warnRuntimeUsage = (method: string) =>

@@ -21,14 +21,6 @@ export interface PageMetaPluginOptions {
 const NODE_MODULES_RE = /[\\/]node_modules[\\/]/;
 const HAS_MACRO_RE = /\bdefinePageMeta\s*\(\s*/;
 
-const CODE_HMR = `
-// Vite
-if (import.meta.hot) {
-  import.meta.hot.accept(mod => {
-    Object.assign(__nuxt_page_meta, mod)
-  })
-}`;
-
 export const PageMetaPlugin = createUnplugin(
   (options: PageMetaPluginOptions) => {
     return {

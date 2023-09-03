@@ -1,7 +1,6 @@
 {
   "name": "@wattanx/page-meta",
-  "private": true,
-  "version": "1.0.0",
+  "version": "0.0.2",
   "license": "MIT",
   "type": "module",
   "exports": {
@@ -37,5 +36,8 @@
     "vitest": "^0.30.1",
     "vue": "2.7.14",
     "unbuild": "1.2.1"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

@@ -1,22 +1,11 @@
 {
   "name": "page-meta-module",
   "version": "1.0.0",
-  "description": "My new Nuxt module",
-  "repository": "your-org/my-module",
+  "private": true,
+  "description": "This module provides the `definePageMeta` macro in Nuxt 2 as well.",
+  "repository": "https://github.com/wattanx/page-meta-module",
   "license": "MIT",
   "type": "module",
-  "exports": {
-    ".": {
-      "types": "./dist/types.d.ts",
-      "import": "./dist/module.mjs",
-      "require": "./dist/module.cjs"
-    }
-  },
-  "main": "./dist/module.cjs",
-  "types": "./dist/types.d.ts",
-  "files": [
-    "dist"
-  ],
   "scripts": {
     "build": "FORCE_COLOR=1 pnpm --filter './packages/**' prepack",
     "dev": "nuxi dev playground",
