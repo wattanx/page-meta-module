@@ -7,9 +7,3 @@ const count = ref(0);
 <template>
   <div>Nuxt module playground!</div>
 </template>
-
-<script lang="ts">
-export default {
-  middleware: "auth",
-};
-</script>

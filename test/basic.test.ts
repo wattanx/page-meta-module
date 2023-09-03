@@ -1,16 +1,19 @@
 import { describe, it, expect } from "vitest";
-import { mount } from "@vue/test-utils";
-import Index from "../playground/pages/index.vue";
-import PageMeta from "../playground/pages/page-meta.vue";
+import { fileURLToPath } from "node:url";
+import { $fetch, setup } from "@nuxt/test-utils";
+
+await setup({
+  rootDir: fileURLToPath(new URL("../playground", import.meta.url)),
+  server: true,
+  nuxtConfig: {
+    ssr: true,
+  },
+});
 
 describe("middleware", async () => {
-  it("render", () => {
-    const wrapper = mount(Index);
-    expect(wrapper.html()).toContain("Nuxt module playground!");
-  });
-
-  it("definePageMeta", () => {
-    const wrapper = mount(PageMeta);
-    expect(wrapper.html()).toContain("PageMeta");
+  it("redirect to index", async () => {
+    // Get response to a server-rendered page with `$fetch`.
+    const html = await $fetch("/page-meta");
+    expect(html).toContain("<div>Nuxt module playground!</div>");
   });
 });

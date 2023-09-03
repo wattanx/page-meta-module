@@ -4,6 +4,10 @@ import vue from "@vitejs/plugin-vue2";
 export default defineConfig({
   plugins: [vue()],
   test: {
-    environment: "jsdom",
+    server: {
+      deps: {
+        inline: [/@nuxt\/test-utils/],
+      },
+    },
   },
 });

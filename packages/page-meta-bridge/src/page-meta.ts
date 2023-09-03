@@ -1,12 +1,9 @@
 import { pathToFileURL } from "node:url";
 import { createUnplugin } from "unplugin";
 import { parseQuery, parseURL } from "ufo";
-import type { StaticImport } from "mlly";
-import { findExports, findStaticImports, parseStaticImport } from "mlly";
 import type {
   CallExpression,
-  Expression,
-  Identifier,
+  ExportDefaultDeclaration,
   ObjectExpression,
   Property,
 } from "estree";
@@ -24,22 +21,11 @@ export interface PageMetaPluginOptions {
 const NODE_MODULES_RE = /[\\/]node_modules[\\/]/;
 const HAS_MACRO_RE = /\bdefinePageMeta\s*\(\s*/;
 
-const CODE_EMPTY = `
-const  __default__ = null
-export default __nuxt_page_meta
-`;
-
 const CODE_HMR = `
 // Vite
 if (import.meta.hot) {
   import.meta.hot.accept(mod => {
     Object.assign(__nuxt_page_meta, mod)
-  })
-}
-// webpack
-if (import.meta.webpackHot) {
-  import.meta.webpackHot.accept((err) => {
-    if (err) { window.location = window.location.href }
   })
 }`;
 
@@ -92,23 +78,8 @@ export const PageMetaPlugin = createUnplugin(
 
         const hasMacro = HAS_MACRO_RE.test(code);
 
-        const imports = findStaticImports(code);
-
         if (!hasMacro) {
           return;
-        }
-
-        const importMap = new Map<string, StaticImport>();
-
-        for (const i of imports) {
-          const parsed = parseStaticImport(i);
-          for (const name of [
-            parsed.defaultImport,
-            ...Object.values(parsed.namedImports || {}),
-            parsed.namespacedImport,
-          ].filter(Boolean) as string[]) {
-            importMap.set(name, i);
-          }
         }
 
         walk(
@@ -121,13 +92,20 @@ export const PageMetaPlugin = createUnplugin(
               if (_node.type !== "ExportDefaultDeclaration") {
                 return;
               }
-              const callexprettison = _node.declaration;
+
+              const defaultDeclaration = _node as ExportDefaultDeclaration & {
+                start: number;
+                end: number;
+              };
+
+              const callexprettison = defaultDeclaration.declaration;
               if (
                 callexprettison.type !== "CallExpression" ||
                 (callexprettison as CallExpression).callee.type !== "Identifier"
               ) {
                 return;
               }
+
               const node = callexprettison as CallExpression & {
                 start: number;
                 end: number;
@@ -138,12 +116,8 @@ export const PageMetaPlugin = createUnplugin(
                 return;
               }
 
-              const arg = node.arguments[0] as ObjectExpression & {
-                start: number;
-                end: number;
-              };
-
-              const properties = arg.properties as (Property & {
+              const properties = (node.arguments[0] as ObjectExpression)
+                .properties as (Property & {
                 start: number;
                 end: number;
               })[];
@@ -153,7 +127,10 @@ export const PageMetaPlugin = createUnplugin(
                   node.key.type === "Identifier" && node.key.name === "setup"
               );
 
-              let options;
+              if (!setupNode) {
+                return;
+              }
+
               let contents;
               walk(setupNode, {
                 enter(_node) {
@@ -178,32 +155,25 @@ export const PageMetaPlugin = createUnplugin(
                     end: number;
                   };
 
-                  s.overwrite(node.start, node.end, "");
+                  contents = `const __nuxt_page_meta = 
+                    ${code.slice(meta.start, meta.end) || {}}
+                  `;
 
-                  options = [
-                    ...meta.properties.map((p) => code.slice(p.start, p.end)),
-                  ].join(",");
+                  // remove macro
+                  s.overwrite(node.start, node.end, "");
                 },
               });
+
+              s.prependLeft(defaultDeclaration.start, contents);
 
               if (code.includes("__nuxt_page_meta")) {
                 return;
               }
 
-              s.prependLeft(properties[0].start, `${options},`);
+              s.prependLeft(properties[0].start, `...__nuxt_page_meta,`);
             },
           }
         );
-
-        console.log(s.toString());
-
-        // if (!s.hasChanged() && !code.includes("__default__")) {
-        //   s.overwrite(
-        //     0,
-        //     code.length,
-        //     CODE_EMPTY + (options.dev ? CODE_HMR : "")
-        //   );
-        // }
 
         return result();
       },
@@ -224,15 +194,6 @@ export const PageMetaPlugin = createUnplugin(
     };
   }
 );
-
-// https://github.com/vuejs/vue-loader/pull/1911
-// https://github.com/vitejs/vite/issues/8473
-function rewriteQuery(id: string) {
-  return id.replace(
-    /\?.+$/,
-    (r) => "?macro=true&" + r.replace(/^\?/, "").replace(/&macro=true/, "")
-  );
-}
 
 function parseMacroQuery(id: string) {
   const { search } = parseURL(
