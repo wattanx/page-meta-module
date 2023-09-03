@@ -5,6 +5,9 @@ This module provides the `definePageMeta` macro in Nuxt 2 as well.
 > **Warning**
 > This library is in active development. Use at your own risk.
 
+> **Warning**
+> Requires `nuxt/bridge`.
+
 ## Quick Setup
 
 1. Add `@wattanx/page-meta` dependency to your project

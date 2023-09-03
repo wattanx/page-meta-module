@@ -17,3 +17,10 @@ describe("middleware", async () => {
     expect(html).toContain("<div>Nuxt module playground!</div>");
   });
 });
+
+describe("layout", () => {
+  it("should render layout", async () => {
+    const html = await $fetch("/");
+    expect(html).toContain("<header>test layout</header>");
+  });
+});

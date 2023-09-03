@@ -7,6 +7,7 @@ import {
 import { PageMetaPlugin } from "./page-meta";
 import type { PageMetaPluginOptions } from "./page-meta";
 import { resolve } from "pathe";
+import { distDir } from "./dirs";
 
 export default defineNuxtModule({
   meta: {
@@ -25,26 +26,19 @@ export default defineNuxtModule({
         resolve(layer.config.srcDir, layer.config.dir?.pages || "pages")
       ),
     };
+
     nuxt.hook("modules:done", () => {
       addVitePlugin(PageMetaPlugin.vite(pageMetaOptions));
       addWebpackPlugin(PageMetaPlugin.webpack(pageMetaOptions));
     });
 
-    addTemplate({
-      filename: "types/define-page-meta.d.ts",
-      getContents: () =>
-        `export interface PageMeta {
-  middleware?: string | string[];
-}
-declare global {
-  const definePageMeta: (meta: PageMeta) => void;
-}
-`,
-    });
+    const runtimeDir = resolve(distDir, "runtime");
 
-    nuxt.hook("prepare:types", ({ references }) => {
-      references.push({
-        path: resolve(nuxt.options.buildDir, "types/define-page-meta.d.ts"),
+    nuxt.hook("imports:extend", (imports) => {
+      imports.push({
+        name: "definePageMeta",
+        as: "definePageMeta",
+        from: resolve(runtimeDir, "composables"),
       });
     });
   },

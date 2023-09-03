@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 definePageMeta({
-  middleware: "auth",
+  middleware: "redirect",
 });
 const count = ref(0);
 </script>
