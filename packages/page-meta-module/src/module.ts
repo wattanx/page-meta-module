@@ -13,7 +13,7 @@ export interface ModuleOptions {}
 
 export default defineNuxtModule<ModuleOptions>({
   meta: {
-    name: "page-meta-bridge",
+    name: "@wattanx/page-meta",
     compatibility: {
       bridge: true,
     },

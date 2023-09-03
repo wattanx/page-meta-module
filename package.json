@@ -1,5 +1,5 @@
 {
-  "name": "page-meta-bridge",
+  "name": "page-meta-module",
   "version": "1.0.0",
   "description": "My new Nuxt module",
   "repository": "your-org/my-module",

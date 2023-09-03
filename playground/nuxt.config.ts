@@ -1,5 +1,5 @@
 import { defineNuxtConfig } from "@nuxt/bridge";
-import pageMeta from "@wattanx/page-meta-bridge";
+import pageMeta from "@wattanx/page-meta";
 
 export default defineNuxtConfig({
   modules: [pageMeta],

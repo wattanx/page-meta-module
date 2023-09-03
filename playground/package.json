@@ -16,6 +16,6 @@
     "@nuxt/bridge": "npm:@nuxt/bridge-edge@3.0.0-28200790.d820607",
     "@vueuse/head": "^1.1.23",
     "nuxt": "2.17.1",
-    "@wattanx/page-meta-bridge": "workspace:*"
+    "@wattanx/page-meta": "workspace:*"
   }
 }
