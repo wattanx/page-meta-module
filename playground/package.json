@@ -6,8 +6,7 @@
     "build": "nuxi build",
     "dev": "nuxi dev",
     "generate": "nuxi generate",
-    "start": "node .output/server/index.mjs",
-    "prepare": "nuxi prepare"
+    "start": "node .output/server/index.mjs"
   },
   "dependencies": {
     "estree-walker": "^3.0.3"
