@@ -11,10 +11,10 @@ await setup({
 });
 
 describe("middleware", async () => {
-  it("redirect to index", async () => {
+  it("redirect to redirected", async () => {
     // Get response to a server-rendered page with `$fetch`.
     const html = await $fetch("/page-meta");
-    expect(html).toContain("<div>Nuxt module playground!</div>");
+    expect(html).toContain("<div>redirected !</div>");
   });
 });
 

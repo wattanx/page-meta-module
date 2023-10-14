@@ -1,12 +1,11 @@
 import { defineNuxtConfig } from "@nuxt/bridge";
-import pageMeta from "@wattanx/page-meta";
 
 export default defineNuxtConfig({
-  modules: [pageMeta],
+  modules: ["@wattanx/page-meta"],
   ssr: false,
   telemetry: false,
   bridge: {
-    vite: false,
+    vite: !process.env.TEST_WITH_WEBPACK,
     nitro: true,
   },
   build: {

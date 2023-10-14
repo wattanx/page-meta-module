@@ -1,3 +1,3 @@
 export default function ({ redirect }) {
-  return redirect("/");
+  return redirect("/redirected");
 }
