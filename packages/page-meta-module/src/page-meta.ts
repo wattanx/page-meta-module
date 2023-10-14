@@ -6,6 +6,7 @@ import type {
   ExportDefaultDeclaration,
   ObjectExpression,
   Property,
+  VariableDeclaration,
 } from "estree";
 import type { Node } from "estree-walker";
 import { walk } from "estree-walker";
@@ -81,16 +82,23 @@ export const PageMetaPlugin = createUnplugin(
           }) as Node,
           {
             enter(_node) {
-              if (_node.type !== "ExportDefaultDeclaration") {
+              if (!_node.type) {
+                return;
+              }
+              if (
+                !["ExportDefaultDeclaration", "VariableDeclaration"].includes(
+                  _node.type
+                )
+              ) {
                 return;
               }
 
-              const defaultDeclaration = _node as ExportDefaultDeclaration & {
+              const declaration = _node as ExportDefaultDeclaration & {
                 start: number;
                 end: number;
               };
 
-              const callexprettison = defaultDeclaration.declaration;
+              const callexprettison = getCallExpression(declaration);
               if (
                 callexprettison.type !== "CallExpression" ||
                 (callexprettison as CallExpression).callee.type !== "Identifier"
@@ -156,7 +164,7 @@ export const PageMetaPlugin = createUnplugin(
                 },
               });
 
-              s.prependLeft(defaultDeclaration.start, contents);
+              s.prependLeft(declaration.start, contents);
 
               if (code.includes("__nuxt_page_meta")) {
                 return;
@@ -169,34 +177,22 @@ export const PageMetaPlugin = createUnplugin(
 
         return result();
       },
-      vite: {
-        handleHotUpdate: {
-          order: "pre",
-          handler: ({ modules }) => {
-            // Remove macro file from modules list to prevent HMR overrides
-            const index = modules.findIndex((i) =>
-              i.id?.includes("?macro=true")
-            );
-            if (index !== -1) {
-              modules.splice(index, 1);
-            }
-          },
-        },
-      },
     };
   }
 );
 
+function getCallExpression(
+  node: ExportDefaultDeclaration | VariableDeclaration
+) {
+  if (node.type === "ExportDefaultDeclaration") {
+    return node.declaration;
+  }
+  return node.declarations[0].init;
+}
+
 function parseMacroQuery(id: string) {
   const { search } = parseURL(
-    decodeURIComponent(isAbsolute(id) ? pathToFileURL(id).href : id).replace(
-      /\?macro=true$/,
-      ""
-    )
+    decodeURIComponent(isAbsolute(id) ? pathToFileURL(id).href : id)
   );
-  const query = parseQuery(search);
-  if (id.includes("?macro=true")) {
-    return { macro: "true", ...query };
-  }
-  return query;
+  return parseQuery(search);
 }
