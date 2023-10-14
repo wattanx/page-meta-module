@@ -1,7 +1,9 @@
+import type { DefineComponent } from "vue";
+
 export interface PageMeta {
   name?: string;
-  middleware?: string | string[];
-  layout?: string;
+  middleware?: DefineComponent["middleware"];
+  layout?: DefineComponent["layout"];
 }
 
 const warnRuntimeUsage = (method: string) =>
