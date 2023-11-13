@@ -43,7 +43,7 @@
     "@types/node": "^18.18.5",
     "changelogen": "^0.5.5",
     "eslint": "8.51.0",
-    "unbuild": "1.2.1",
+    "unbuild": "2.0.0",
     "vitest": "^0.34.6",
     "vue": "2.7.14"
   },
