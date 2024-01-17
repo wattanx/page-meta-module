@@ -20,13 +20,13 @@
     "test:ui": "vitest --ui"
   },
   "dependencies": {
-    "@nuxt/kit": "3.7.4"
+    "@nuxt/kit": "3.9.3"
   },
   "devDependencies": {
-    "@nuxt/eslint-config": "^0.1.1",
-    "@nuxt/module-builder": "0.5.2",
-    "@nuxt/schema": "3.7.4",
-    "@nuxt/test-utils": "3.7.4",
+    "@nuxt/eslint-config": "^0.2.0",
+    "@nuxt/module-builder": "0.5.5",
+    "@nuxt/schema": "3.9.3",
+    "@nuxt/test-utils": "3.10.0",
     "@types/node": "^18.18.5",
     "@vitejs/plugin-vue2": "^2.2.0",
     "@vitest/ui": "0.34.6",
