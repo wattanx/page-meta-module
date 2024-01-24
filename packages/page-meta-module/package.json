@@ -40,7 +40,7 @@
     "@nuxt/module-builder": "^0.3.0",
     "@nuxt/schema": "3.7.4",
     "@nuxt/test-utils": "3.7.4",
-    "@types/node": "^18.18.5",
+    "@types/node": "^20.11.6",
     "changelogen": "^0.5.5",
     "eslint": "8.51.0",
     "unbuild": "1.2.1",
