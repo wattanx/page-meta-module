@@ -1,5 +1,8 @@
 # Page Meta Module
 
+> [!IMPORTANT]
+> This feature has already been incorporated into [@nuxt/bridge](https://github.com/nuxt/bridge).
+
 This module provides the `definePageMeta` macro in Nuxt 2 as well.
 
 - ▶️  [Playground](https://stackblitz.com/edit/github-3fgb91-1hjfln)
